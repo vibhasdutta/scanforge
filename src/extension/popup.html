@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ScanForge</title>
+  <style>
+    :root { color-scheme: dark; --bg:#100d0a; --panel:#1b1611; --panel-2:#241b13; --line:#3b2b1d; --text:#fff6ec; --muted:#b8a797; --accent:#ff7900; --accent-hover:#ff922e; --danger:#ff776d; }
+    * { box-sizing: border-box; }
+    * { scrollbar-width:none; }
+    *::-webkit-scrollbar { width:0; height:0; display:none; }
+    html { background:var(--bg); }
+    body { width:440px; margin:0; padding:18px; background:radial-gradient(circle at 15% 0%,#291708 0,transparent 38%),var(--bg); color:var(--text); font:13px/1.45 "Segoe UI",system-ui,sans-serif; }
+    header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+    .brand { display:flex; align-items:center; gap:10px; }
+    .brand img { width:34px; height:34px; object-fit:contain; filter:drop-shadow(0 4px 10px #ff790040); transition:filter .25s ease,opacity .25s ease; }
+    .brand img[data-state="ready"] { filter:drop-shadow(0 4px 10px #52b78860); }
+    .brand img[data-state="auditing"] { filter:drop-shadow(0 4px 10px #ff790060); }
+    @keyframes pulse-dot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.85); } }
+    .brand img[data-state="starting"] { filter:drop-shadow(0 4px 10px #ff790060); }
+    .brand img[data-state="stopping"] { filter:drop-shadow(0 4px 10px #d9a44160); }
+    .brand img[data-state="error"] { filter:drop-shadow(0 4px 10px #ff776d60); }
+    .brand img[data-state="offline"] { filter:drop-shadow(0 4px 8px #6e768130); opacity:0.85; }
+    h1 { margin:0; font-size:20px; letter-spacing:-.04em; }
+    .brand small { display:block; color:var(--muted); font-size:10px; letter-spacing:.04em; }
+    .header-actions { display:flex; align-items:center; gap:7px; }
+    .companion-group { display:flex; align-items:center; gap:5px; }
+    .companion-badge { min-height:28px; padding:0 9px; display:flex; align-items:center; gap:7px; color:var(--muted); font-size:11px; white-space:nowrap; border:1px solid var(--line); border-radius:7px; background:var(--panel); user-select:none; }
+    .companion-dot { width:7px; height:7px; border-radius:50%; background:#6e7681; box-shadow:0 0 0 3px #6e768122; transition:background .2s,box-shadow .2s; }
+    .companion-badge[data-state="ready"] .companion-dot { background:#52b788; box-shadow:0 0 0 3px #52b78822; }
+    .companion-badge[data-state="auditing"] .companion-dot { background:var(--accent); box-shadow:0 0 0 3px #ff790025; }
+    .companion-badge[data-state="starting"] .companion-dot { background:var(--accent); box-shadow:0 0 0 3px #ff790025; animation: pulse-dot 1s infinite ease-in-out; }
+    .companion-badge[data-state="stopping"] .companion-dot { background:#d9a441; box-shadow:0 0 0 3px #d9a44125; animation: pulse-dot 1s infinite ease-in-out; }
+    .companion-badge[data-state="error"] .companion-dot { background:var(--danger); }
+    .companion-actions { display:flex; align-items:center; gap:4px; }
+    .companion-btn { min-height:28px; padding:0 8px; font-size:11px; font-weight:600; border-radius:7px; border:1px solid var(--line); background:var(--panel); color:var(--text); cursor:pointer; transition:background .15s,border-color .15s,transform .15s; }
+    .companion-btn:hover:not(:disabled) { border-color:#65705f; background:#232823; }
+    .companion-btn:active:not(:disabled) { transform:translateY(1px); }
+    .companion-btn.start-btn { border-color:var(--accent); background:var(--accent); color:#211005; font-weight:700; }
+    .companion-btn.start-btn:hover:not(:disabled) { background:var(--accent-hover); border-color:var(--accent-hover); }
+    .companion-btn.restart-btn { border-color:#3b2b1d; color:#e0d2c5; }
+    .companion-btn.stop-btn { border-color:#5c2420; color:var(--danger); }
+    .companion-btn.stop-btn:hover:not(:disabled) { border-color:var(--danger); background:#301412; }
+    .companion-btn.hidden { display:none; }
+    .icon-button { width:34px; padding:0; display:grid; place-items:center; color:var(--muted); }
+    .icon-button svg { width:17px; height:17px; }
+    h2 { margin:0 0 8px; font-size:13px; font-weight:600; }
+    section { padding:14px 0 16px; border-top:1px solid var(--line); }
+    button, select { min-height:34px; border:1px solid var(--line); border-radius:7px; background:var(--panel); color:var(--text); font:inherit; }
+    button { padding:0 12px; cursor:pointer; transition:background .2s,transform .15s,border-color .2s; }
+    button:hover:not(:disabled) { border-color:#65705f; background:#232823; }
+    button:active:not(:disabled) { transform:translateY(1px); }
+    button:focus-visible, select:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+    button:disabled { opacity:.42; cursor:not-allowed; }
+    .primary { background:var(--accent); border-color:var(--accent); color:#211005; font-weight:700; box-shadow:0 6px 18px #ff790022; }
+    .primary:hover:not(:disabled) { background:var(--accent-hover); border-color:var(--accent-hover); }
+    .danger { color:var(--danger); }
+    .actions { display:flex; gap:7px; flex-wrap:wrap; }
+    #status { color:var(--muted); min-height:20px; margin-top:9px; }
+    #error { color:var(--danger); margin-top:7px; white-space:pre-wrap; }
+    #progress-wrap { margin:9px 0 2px; }
+    #progress-summary { display:flex; justify-content:space-between; gap:12px; margin-bottom:7px; font-size:12px; font-variant-numeric:tabular-nums; }
+    #progress-pages { display:grid; gap:7px; }
+    .progress-page { padding:9px; background:var(--panel); border-radius:7px; }
+    .progress-page-head { display:flex; justify-content:space-between; gap:8px; margin-bottom:6px; }
+    .progress-page-title { min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:600; }
+    .device-progress { display:grid; grid-template-columns:58px minmax(0,1fr) 34px; gap:8px; align-items:center; margin-top:7px; font-size:11px; }
+    .device-track { height:7px; overflow:hidden; border-radius:4px; background:#0e0b08; border:1px solid var(--line); }
+    .device-bar { width:0; height:100%; background:var(--accent); transition:width .3s ease; }
+    .device-percent { text-align:right; font-variant-numeric:tabular-nums; }
+    #progress-stage { margin-top:8px; color:var(--muted); font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .selection-tools { display:flex; justify-content:space-between; align-items:center; margin:8px 0; color:var(--muted); font-size:11px; }
+    #capture-count { color:var(--muted); margin:8px 0; }
+    #capture-list { max-height:150px; overflow:auto; display:grid; gap:5px; }
+    .capture-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; align-items:center; padding:8px 9px; background:var(--panel); border-radius:6px; }
+    .capture-main { display:grid; grid-template-columns:auto minmax(0,1fr); gap:8px; align-items:center; min-width:0; }
+    .capture-label { overflow:hidden; }
+    .capture-title, .capture-url { display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .capture-title { font-weight:550; }
+    .capture-url { color:var(--muted); font-size:11px; }
+    .capture-row button { min-height:28px; padding:0 9px; font-size:11px; }
+    .report-controls { display:grid; grid-template-columns:minmax(0,1fr) auto auto auto; gap:7px; margin-bottom:8px; }
+    select { width:100%; padding:0 9px; }
+    #report { width:100%; height:220px; resize:vertical; border:1px solid var(--line); border-radius:7px; padding:10px; background:#0b0d0b; color:#d9ded5; font:11px/1.5 ui-monospace,monospace; }
+    ::placeholder { color:var(--accent); opacity:.6; }
+    .hidden { display:none; }
+    input { accent-color:var(--accent); }
+    .run-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; align-items:center; }
+    .run-row button { min-height:39px; }
+    #run-selection { grid-column:1 / -1; color:var(--muted); font-size:10px; }
+    .progress-page, .progress-page * { min-width:0; }
+    .progress-page-head { align-items:flex-start; }
+    .progress-page-head > span:last-child { flex:0 1 38%; text-align:right; overflow-wrap:anywhere; }
+    .progress-stage { margin-top:8px; color:var(--muted); font-size:11px; white-space:normal; overflow-wrap:anywhere; word-break:break-word; }
+    .device-progress > span:first-child { overflow:hidden; text-overflow:ellipsis; }
+    .report-controls:has(select.hidden) { display:flex; justify-content:flex-end; }
+    .stop-audit-btn { background:#3a1410 !important; border-color:var(--danger) !important; color:var(--danger) !important; font-weight:700 !important; }
+    .stop-audit-btn:hover:not(:disabled) { background:var(--danger) !important; color:#fff !important; }
+  </style>
+</head>
+<body>
+  <header><div class="brand"><img id="brand-logo" src="../../assets/scanforge-main.svg" alt="ScanForge lighthouse and anvil logo"><div><h1>ScanForge</h1><small>MULTI-PAGE AUDITS FOR AI</small></div></div><div class="header-actions"><div class="companion-group"><div id="companion-badge" class="companion-badge" data-state="offline" title="ScanForge Companion status (run 'npx scanforge' in terminal)"><span class="companion-dot" aria-hidden="true"></span><span id="companion-label">Offline</span></div><div id="companion-actions" class="companion-actions"><button id="companion-start-btn" class="companion-btn start-btn" title="Start headless companion server">Start</button><button id="companion-restart-btn" class="companion-btn restart-btn hidden" title="Restart companion server">Restart</button><button id="companion-stop-btn" class="companion-btn stop-btn hidden" title="Stop companion server">Stop</button></div></div><button id="stop-all" class="companion-btn stop-audit-btn hidden">Stop Audit</button><button id="settings" class="icon-button" aria-label="Open audit settings" title="Audit settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.55V21h-4v-.08A1.7 1.7 0 0 0 8.96 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1.03H3v-4h.08A1.7 1.7 0 0 0 4.6 8.94a1.7 1.7 0 0 0-.34-1.88L4.2 7l2.83-2.83.06.06a1.7 1.7 0 0 0 1.88.34A1.7 1.7 0 0 0 10 3.03V3h4v.08a1.7 1.7 0 0 0 1.03 1.55 1.7 1.7 0 0 0 1.88-.34l.06-.06L19.8 7l-.06.06a1.7 1.7 0 0 0-.34 1.88A1.7 1.7 0 0 0 20.95 10H21v4h-.08A1.7 1.7 0 0 0 19.4 15Z"/></svg></button></div></header>
+  <div class="run-row"><button id="run" class="primary">Audit current page</button><button id="capture-toggle">Start capture</button><span id="run-selection"></span></div>
+  <div id="status" aria-live="polite"></div><div id="error" role="alert"></div>
+  <div id="progress-wrap" class="hidden" aria-label="Audit progress">
+    <div id="progress-summary"><span id="selected-pages">Selected pages: 0</span><span id="run-mode">Accurate mode</span></div>
+    <div id="progress-pages"></div>
+  </div>
+  <section>
+    <h2>Page capture</h2>
+    <div class="actions"><button id="clear-captures" class="hidden">Clear list</button></div>
+    <div class="selection-tools hidden" id="selection-tools"><span id="capture-count"></span><label><input id="select-all" type="checkbox" checked> Select all</label></div><div id="capture-list"></div>
+    <div class="actions" style="margin-top:9px"><button id="run-batch" class="primary" disabled>Audit all captured pages</button></div>
+  </section>
+  <section id="reports-section" class="hidden">
+    <h2>Reports</h2>
+    <div class="report-controls"><select id="report-select" aria-label="Choose report"></select><button id="copy" disabled>Copy</button><button id="download" disabled>Download</button><button id="clear-reports" class="danger">Clear</button></div>
+    <textarea id="report" readonly placeholder="Your report will appear here."></textarea>
+  </section>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

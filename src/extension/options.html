@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ScanForge settings</title>
+  <style>
+    :root{color-scheme:dark;--bg:#100d0a;--panel:#1b1611;--line:#3b2b1d;--text:#fff6ec;--muted:#b8a797;--accent:#ff7900}
+    *{box-sizing:border-box;scrollbar-width:none}*::-webkit-scrollbar{display:none}
+    body{margin:0;min-height:100dvh;background:radial-gradient(circle at 20% 0,#321b09 0,transparent 34%),var(--bg);color:var(--text);font:14px/1.5 "Segoe UI",system-ui,sans-serif}
+    main{width:min(1000px,calc(100% - 32px));margin:0 auto;padding:clamp(22px,4vh,40px) 0 36px}
+    header{display:flex;align-items:center;gap:14px;margin-bottom:clamp(16px,2.5vh,26px)}header img{width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 7px 18px #ff790044)}
+    h1{margin:0;font-size:30px;letter-spacing:-.045em}header p{margin:2px 0 0;color:var(--muted)}
+    form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:stretch}.group{min-width:0;padding:16px;background:linear-gradient(145deg,#21170f,var(--panel));border:1px solid var(--line);border-radius:12px}
+    fieldset{height:100%;margin:0;padding:0;border:0}legend{margin-bottom:10px;font-size:15px;font-weight:700}.choices{display:grid;grid-template-columns:1fr;gap:7px}
+    .choice{display:flex;gap:9px;align-items:flex-start;min-width:0;padding:10px 11px;border:1px solid var(--line);border-radius:8px;cursor:pointer;transition:border-color .2s,background .2s,transform .15s}.choice:hover{border-color:#704521}.choice:active{transform:translateY(1px)}
+    .choice:has(input:checked){border-color:var(--accent);background:#2b190c}.choice span,.choice small{display:block}.choice small{margin-top:2px;color:var(--muted);font-size:11px}.choice input{margin-top:3px;accent-color:var(--accent)}
+    .categories{grid-template-columns:repeat(2,minmax(0,1fr))}.choice.disabled{opacity:.38;cursor:not-allowed}
+    .slider-row{margin-bottom:16px}.slider-row:last-of-type{margin-bottom:0}
+    .slider-label{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px;font-size:13px}
+    .slider-label output{font-variant-numeric:tabular-nums;color:var(--accent);font-weight:700}
+    input[type=range]{width:100%;accent-color:var(--accent);height:20px}
+    input[type=range]:disabled{opacity:.4;accent-color:var(--muted)}
+    .slider-hint{display:block;margin-top:6px;color:var(--muted);font-size:11px}
+    footer{grid-column:1 / -1;position:sticky;bottom:12px;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:2px;padding:10px 10px 10px 14px;background:#19110beF;border:1px solid var(--line);border-radius:10px;backdrop-filter:blur(12px)}.status{color:var(--muted);min-height:22px}button{min-height:40px;padding:0 18px;border:1px solid var(--accent);border-radius:6px;background:var(--accent);color:#211005;font:inherit;font-weight:750;cursor:pointer;box-shadow:0 7px 20px #ff790025}button:hover{background:#ff922e}button:focus-visible,input:focus-visible{outline:2px solid #ffad63;outline-offset:2px}
+    @media(max-width:760px){main{padding-top:22px}form{grid-template-columns:1fr}.choices{grid-template-columns:1fr}.categories{grid-template-columns:repeat(2,minmax(0,1fr))}h1{font-size:25px}}
+    @media(max-width:480px){main{width:min(100% - 20px,1000px)}header{align-items:flex-start}header img{width:40px;height:40px}.categories{grid-template-columns:1fr}.group{padding:13px}footer{bottom:6px}}
+    @media(max-height:700px) and (min-width:761px){main{padding:12px 0 18px}header{margin-bottom:8px}header img{width:40px;height:40px}header p{font-size:12px}form{grid-template-columns:1fr;gap:7px}.group{padding:9px 12px}legend{margin-bottom:6px;font-size:13px}.choices{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.processing-group .choices{grid-template-columns:repeat(2,minmax(0,1fr))}.categories{grid-template-columns:repeat(5,minmax(0,1fr))}.choice{padding:7px 9px}.choice small{font-size:10px}footer{bottom:4px;min-height:48px;padding:5px 6px 5px 11px}button{min-height:36px}}
+  </style>
+</head>
+<body>
+<main>
+  <header><img src="../../Scanforge.png" alt="ScanForge logo"><div><h1>Audit settings</h1><p>Configure multi-page Lighthouse audits and generate focused reports ready for developers and AI coding tools.</p></div></header>
+  <form id="settings-form">
+    <section class="group mode-group"><fieldset><legend>Lighthouse mode</legend><div class="choices">
+      <label class="choice"><input type="radio" name="lighthouse-mode" value="navigation"><span>Navigation<small>Measure a fresh page load</small></span></label>
+      <label class="choice"><input type="radio" name="lighthouse-mode" value="timespan"><span>Timespan<small>Measure an activity window</small></span></label>
+      <label class="choice"><input type="radio" name="lighthouse-mode" value="snapshot"><span>Snapshot<small>Inspect the loaded state</small></span></label>
+    </div></fieldset></section>
+    <section class="group device-group"><fieldset><legend>Device</legend><div class="choices">
+      <label class="choice"><input type="radio" name="audit-device" value="both"><span>Mobile + Desktop<small>One combined report</small></span></label>
+      <label class="choice"><input type="radio" name="audit-device" value="mobile"><span>Mobile only<small>Emulated mobile conditions</small></span></label>
+      <label class="choice"><input type="radio" name="audit-device" value="desktop"><span>Desktop only<small>Desktop viewport and network</small></span></label>
+    </div></fieldset></section>
+    <section class="group processing-group"><fieldset><legend>Page processing</legend><div class="choices">
+      <label class="choice"><input type="radio" name="processing-mode" value="accurate"><span>Accurate<small>One selected page at a time</small></span></label>
+      <label class="choice"><input type="radio" name="processing-mode" value="fast"><span>Fast<small>Concurrent pages, capped by free CPU and memory</small></span></label>
+    </div></fieldset></section>
+    <section class="group categories-group"><fieldset><legend>Categories</legend><div class="choices categories">
+      <label class="choice"><input type="checkbox" name="audit-category" value="performance">Performance</label>
+      <label class="choice"><input type="checkbox" name="audit-category" value="accessibility">Accessibility</label>
+      <label class="choice"><input type="checkbox" name="audit-category" value="best-practices">Best practices</label>
+      <label class="choice"><input type="checkbox" name="audit-category" value="seo">SEO</label>
+      <label class="choice"><input type="checkbox" name="audit-category" value="agentic-browsing">Agentic browsing</label>
+    </div></fieldset></section>
+    <section class="group resources-group"><fieldset><legend>Resource limits (Fast mode)</legend>
+      <div class="slider-row">
+        <div class="slider-label"><span>CPU cores</span><output id="cores-value">&mdash;</output></div>
+        <input type="range" id="max-cores" min="1" max="1" step="1" disabled>
+        <small class="slider-hint" id="cores-hint">Detecting your machine&rsquo;s limits&hellip;</small>
+      </div>
+      <div class="slider-row">
+        <div class="slider-label"><span>Memory</span><output id="memory-value">&mdash;</output></div>
+        <input type="range" id="max-memory" min="512" max="512" step="256" disabled>
+        <small class="slider-hint" id="memory-hint">Detecting your machine&rsquo;s limits&hellip;</small>
+      </div>
+    </fieldset></section>
+    <footer><div id="status" class="status" aria-live="polite"></div><button type="submit">Save settings</button></footer>
+  </form>
+</main>
+<script type="module" src="options.js"></script>
+</body>
+</html>

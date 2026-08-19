@@ -1,0 +1,54 @@
+
+# Dependencies
+node_modules/
+[Bb]in/
+[Oo]bj/
+
+# Generated build and release artifacts
+dist/
+release/
+desktop-release/
+.tools/
+native-release/
+
+# Generated Lighthouse and ScanForge reports
+*.report.html
+*.report.json
+*.lhr.json
+scanforge-*.md
+
+# Runtime files and logs
+*.log
+logs/
+*.pid
+*.pid.lock
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Test and coverage output
+coverage/
+.nyc_output/
+
+# Editor and operating-system files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.cache
+test/
