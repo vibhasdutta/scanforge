@@ -1,4 +1,25 @@
 $ErrorActionPreference = 'Stop'
+Add-Type -AssemblyName System.IO.Compression
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+# Compress-Archive stores Windows' '\' path separators as-is in the zip's central directory,
+# which violates the ZIP spec (entries must use '/'). Windows tools quietly tolerate it, but
+# unzip/Firefox/Chrome on Linux (and Python's zipfile, etc.) don't reconstruct subfolders from
+# a backslash — they create one flat file with a literal backslash in its name instead, which
+# breaks every relative asset/script path in the extension. Build entries by hand with '/' names.
+function New-SpecCompliantZip($SourceDir, $DestZip) {
+  if (Test-Path -LiteralPath $DestZip) { Remove-Item -LiteralPath $DestZip -Force }
+  $archive = [System.IO.Compression.ZipFile]::Open($DestZip, [System.IO.Compression.ZipArchiveMode]::Create)
+  try {
+    $sourceFull = [System.IO.Path]::GetFullPath($SourceDir)
+    Get-ChildItem -LiteralPath $SourceDir -Recurse -File | ForEach-Object {
+      $relative = $_.FullName.Substring($sourceFull.Length).TrimStart('\', '/').Replace('\', '/')
+      [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, $_.FullName, $relative, [System.IO.Compression.CompressionLevel]::Optimal) | Out-Null
+    }
+  } finally {
+    $archive.Dispose()
+  }
+}
 
 $projectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $manifest = Get-Content -Raw (Join-Path $projectRoot 'manifest.json') | ConvertFrom-Json
@@ -30,16 +51,10 @@ New-Item -ItemType Directory -Path (Join-Path $stagingRoot 'src') -Force | Out-N
 Copy-Item -LiteralPath (Join-Path $projectRoot 'src\extension') -Destination (Join-Path $stagingRoot 'src\extension') -Recurse
 Copy-Item -LiteralPath (Join-Path $projectRoot 'dist\background.js') -Destination (Join-Path $stagingRoot 'dist\background.js')
 
-if (Test-Path -LiteralPath $archivePath) {
-  Remove-Item -LiteralPath $archivePath -Force
-}
-Compress-Archive -Path (Join-Path $stagingRoot '*') -DestinationPath $archivePath -CompressionLevel Optimal
+New-SpecCompliantZip -SourceDir $stagingRoot -DestZip $archivePath
 
 Copy-Item -LiteralPath (Join-Path $projectRoot 'manifest.firefox.json') -Destination (Join-Path $stagingRoot 'manifest.json') -Force
-if (Test-Path -LiteralPath $firefoxArchivePath) {
-  Remove-Item -LiteralPath $firefoxArchivePath -Force
-}
-Compress-Archive -Path (Join-Path $stagingRoot '*') -DestinationPath $firefoxArchivePath -CompressionLevel Optimal
+New-SpecCompliantZip -SourceDir $stagingRoot -DestZip $firefoxArchivePath
 Remove-Item -LiteralPath $stagingRoot -Recurse -Force
 
 Write-Host "Created $archivePath"
