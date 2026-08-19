@@ -9,7 +9,7 @@
 <p align="center">No more running Lighthouse one URL at a time — queue an entire page journey, audit Mobile and Desktop concurrently, and export one focused report that developers and AI coding tools can act on.</p>
 
 <p align="center">
-  <img alt="Version 1.0.1" src="https://img.shields.io/badge/version-1.0.1-ff7300?style=flat-square" />
+  <img alt="Version 1.0.2" src="https://img.shields.io/badge/version-1.0.2-ff7300?style=flat-square" />
   <img alt="Manifest V3" src="https://img.shields.io/badge/extension-Manifest%20V3-202124?style=flat-square" />
   <img alt="Powered by Lighthouse" src="https://img.shields.io/badge/powered%20by-Lighthouse-ff7300?style=flat-square&logo=lighthouse&logoColor=white" />
   <img alt="Local first" src="https://img.shields.io/badge/privacy-local--first-202124?style=flat-square" />
@@ -134,7 +134,9 @@ This registers native messaging automatically for whatever supported browsers it
 
 If you'd rather not install anything persistent and just run audits from a terminal yourself (not relying on the extension's Start button), `npx scanforge-audit` works too — it registers native messaging as well, but from a cache location that can get cleared, which would silently break Start until you run `npx` again.
 
-**Extension** (optional, adds the browser UI) — download the zip for your browser from [Releases](../../releases): `scanforge-extension-1.0.1.zip` for Chrome/Edge/Brave, `scanforge-firefox-extension-1.0.1.zip` for Firefox. Extract it, then:
+Before uninstalling, run `scanforge --unregister` first to remove that native-messaging registration — npm doesn't run cleanup scripts on `npm uninstall` (removed in npm v7), so this has to be a manual step: `scanforge --unregister && npm uninstall -g scanforge-audit`.
+
+**Extension** (optional, adds the browser UI) — download the zip for your browser from [Releases](../../releases): `scanforge-extension-1.0.zip` for Chrome/Edge/Brave, `scanforge-firefox-extension-1.0.zip` for Firefox. Extract it, then:
 
 - **Chrome / Edge / Brave**: open `chrome://extensions` (or `edge://extensions`), enable **Developer mode**, select **Load unpacked**, choose the extracted folder.
 - **Firefox**: open `about:debugging`, select **This Firefox** → **Load Temporary Add-on**, choose `manifest.json` inside the extracted folder. Permanent installation needs a Mozilla-signed package or publication through Firefox Add-ons.
@@ -284,8 +286,8 @@ npm run package:extension
 Outputs:
 
 ```text
-release/scanforge-extension-1.0.1.zip
-release/scanforge-firefox-extension-1.0.1.zip
+release/scanforge-extension-1.0.zip
+release/scanforge-firefox-extension-1.0.zip
 ```
 
 The first package supports Chrome, Edge, and Brave. The second contains Firefox's separate background and extension-identity configuration.

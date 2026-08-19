@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ScanForge",
-  "version": "1.0.1",
+  "version": "1.0",
   "description": "Audit multiple pages with Lighthouse concurrently, and get one focused Markdown report your AI coding tool can fix from.",
   "permissions": ["activeTab", "storage", "unlimitedStorage", "alarms", "notifications", "nativeMessaging"],
   "host_permissions": ["http://127.0.0.1:3210/*"],

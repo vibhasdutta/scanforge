@@ -107,7 +107,7 @@ export function applySettingsSelection(settings, row) {
   return settings;
 }
 
-export function SettingsManager({ settings, cursor = 0, maxWidth }) {
+export function SettingsManager({ settings, cursor = 0, maxWidth, warning = '' }) {
   const w = maxWidth || (process.stdout.columns || 100) - 2;
   const innerW = Math.max(30, w - 4);
   const rows = buildSettingsRows(settings);
@@ -178,7 +178,11 @@ export function SettingsManager({ settings, cursor = 0, maxWidth }) {
       </Box>
 
       <Box marginTop={1} width={innerW} justifyContent="space-between">
-        <Text color="gray">Changes apply immediately and sync with the extension.</Text>
+        {warning ? (
+          <Text color="#ff776d" bold>{warning}</Text>
+        ) : (
+          <Text color="gray">Changes apply immediately and sync with the extension.</Text>
+        )}
         <Text color="#ffb454" bold>{settings.processingMode === 'fast' ? 'Fast' : 'Accurate'} • {settings.categories?.length || 0} categories</Text>
       </Box>
     </Box>

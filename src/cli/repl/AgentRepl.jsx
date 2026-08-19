@@ -69,6 +69,7 @@ export function AgentRepl({ bus = globalCompanionBus }) {
   const [showHelp, setShowHelp] = useState(false);
   const [showSettingsManager, setShowSettingsManager] = useState(false);
   const [settingsCursor, setSettingsCursor] = useState(0);
+  const [settingsWarning, setSettingsWarning] = useState('');
 
   // ── Message helpers ─────────────────────────────────────────────
   const addMessage = useCallback((type, content) => {
@@ -249,10 +250,12 @@ export function AgentRepl({ bus = globalCompanionBus }) {
       const rows = buildSettingsRows(settings).filter(r => r.type !== 'header');
       if (key.upArrow) {
         setSettingsCursor(prev => Math.max(0, prev - 1));
+        setSettingsWarning('');
         return;
       }
       if (key.downArrow) {
         setSettingsCursor(prev => Math.min(rows.length - 1, prev + 1));
+        setSettingsWarning('');
         return;
       }
       if (key.leftArrow || key.rightArrow) {
@@ -264,15 +267,22 @@ export function AgentRepl({ bus = globalCompanionBus }) {
         return;
       }
       if (input === ' ' || key.return) {
-        const next = applySettingsSelection(settings, rows[settingsCursor]);
+        const row = rows[settingsCursor];
+        if (row.type === 'checkbox' && !row.disabled && row.selected && (settings.categories || []).length === 1) {
+          setSettingsWarning('At least one category is required — pick another before removing this one.');
+          return;
+        }
+        const next = applySettingsSelection(settings, row);
         if (next !== settings) {
           setSettings(next);
           bus.saveSettings(next);
+          setSettingsWarning('');
         }
         return;
       }
       if (key.escape || input === 'q' || input === 'Q') {
         setShowSettingsManager(false);
+        setSettingsWarning('');
         return;
       }
     }
@@ -535,6 +545,7 @@ export function AgentRepl({ bus = globalCompanionBus }) {
         setShowReportInspector(false);
         setShowHelp(false);
         setSettingsCursor(0);
+        setSettingsWarning('');
         break;
       }
 
@@ -657,6 +668,7 @@ export function AgentRepl({ bus = globalCompanionBus }) {
               settings={settings}
               cursor={settingsCursor}
               maxWidth={width}
+              warning={settingsWarning}
             />
           )}
         </>

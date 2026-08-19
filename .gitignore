@@ -1,7 +1,12 @@
 
 # Dependencies
 node_modules/
-[Bb]in/
+
+# Compiled native launchers and their generated C# sources (scripts/build-launcher.ps1
+# rebuilds these; bin/scanforge.js itself is real source and must stay tracked — it's the
+# package's own npm "bin" entry point, not a build artifact).
+bin/*.exe
+bin/*.cs
 [Oo]bj/
 
 # Generated build and release artifacts

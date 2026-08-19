@@ -1,6 +1,6 @@
 {
   "name": "scanforge-audit",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Runs Lighthouse across an entire page journey at once instead of one URL at a time — queue multiple pages, audit them concurrently, and get one focused Markdown report your AI coding tool can act on to fix what's broken.",
   "private": false,
   "engines": {
