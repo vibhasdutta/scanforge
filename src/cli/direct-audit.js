@@ -147,6 +147,7 @@ export async function executeAuditBatch({
 
     if (reports.length) {
       reports[0].combinedMarkdown = reportsToCombinedMarkdown(reports);
+      forceGC();
     }
   } finally {
     if (chrome) {

@@ -94,7 +94,7 @@ export function WelcomeSplash({ columns, isCompanionRunning = true, port = 3210 
         <Box marginBottom={1} flexDirection="column">
           <Box gap={1}>
             <Text color="#fc6200" bold>SCANFORGE</Text>
-            <Text color="gray">v1.0.0</Text>
+            <Text color="gray">v1.0.1</Text>
           </Box>
           <Text color="gray">Multi-page Lighthouse audits for AI agents and developers</Text>
         </Box>

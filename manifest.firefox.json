@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ScanForge",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Audit multiple pages with Lighthouse concurrently, and get one focused Markdown report your AI coding tool can fix from.",
   "permissions": ["activeTab", "storage", "unlimitedStorage", "alarms", "notifications", "nativeMessaging"],
   "host_permissions": ["http://127.0.0.1:3210/*"],
@@ -19,7 +19,7 @@
     }
   },
   "options_ui": { "page": "src/extension/options.html", "open_in_tab": true },
-  "background": { "scripts": ["dist/background.js"] },
+  "background": { "scripts": ["dist/background.js"], "type": "module" },
   "browser_specific_settings": {
     "gecko": { "id": "scanforge@scanforge.app", "strict_min_version": "128.0" }
   },

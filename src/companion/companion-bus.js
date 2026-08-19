@@ -543,14 +543,21 @@ export class CompanionBus extends EventEmitter {
       // PHASE 2: COMPILATION & REPORT GENERATION (From .db data)
       // ═════════════════════════════════════════════════════════════════
       if (!run.cancelled) {
-        const records = run.db ? run.db.readAll() : [];
+        let records = run.db ? run.db.readAll() : [];
         const compiledReports = compileReportsFromDb(records);
+        // records and compiledReports hold largely the same data twice over; release the
+        // raw copy immediately instead of leaving both alive through report generation.
+        records = null;
         run.reports = compiledReports;
         if (compiledReports.length) {
           const aggregatedMarkdown = reportsToCombinedMarkdown(compiledReports);
           compiledReports.forEach(r => { r.combinedMarkdown = aggregatedMarkdown; });
           this.latestReports = compiledReports;
         }
+        // Phase 1's per-audit forceGC() calls don't cover this compilation phase — on a
+        // resource-constrained machine with a correspondingly smaller heap ceiling, this was
+        // the actual point of failure, not the audits themselves.
+        forceGC();
       }
     } catch (err) {
       run.state = run.cancelled ? 'stopped' : 'error';
