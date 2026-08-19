@@ -86,7 +86,7 @@ Focused report data -> combined Markdown
 
 The browser extension manages page capture, settings, progress, reports, downloads, toolbar state, and notifications. The local companion launches Lighthouse, schedules device and page jobs, streams progress, and converts Lighthouse results into focused report data.
 
-The extension cannot run the Lighthouse Node package by itself due to browser sandbox limits. Run `npx scanforge` or `npm run companion` in your terminal while auditing.
+The extension cannot run the Lighthouse Node package by itself due to browser sandbox limits. Run `npx scanforge-audit` or `npm run companion` in your terminal while auditing.
 
 ## Chapter 3: Platform support
 
@@ -105,9 +105,9 @@ ScanForge is 100% portable and cross-platform:
 
 | Operating system | Companion | Experience |
 | --- | --- | --- |
-| Windows 10/11 | `npx scanforge` (or `npm run companion`) | Full browser extension + terminal |
-| macOS | `npx scanforge` (or `npm run companion`) | Full browser extension + terminal |
-| Linux | `npx scanforge` (or `npm run companion`) | Full browser extension + terminal |
+| Windows 10/11 | `npx scanforge-audit` (or `npm run companion`) | Full browser extension + terminal |
+| macOS | `npx scanforge-audit` (or `npm run companion`) | Full browser extension + terminal |
+| Linux | `npx scanforge-audit` (or `npm run companion`) | Full browser extension + terminal |
 
 All status controls and indicators remain right in the browser toolbar and extension popup.
 
@@ -115,24 +115,29 @@ All status controls and indicators remain right in the browser toolbar and exten
 
 ### Requirements
 
-- A locally installed Chromium browser for Lighthouse.
-- Chrome, Edge, Brave, or Firefox for the extension.
-- Node.js 22.19+ and npm — only needed for the "For developers" path below.
+- Node.js 22.19+ and npm — the companion is a Node program; there's no way to audit anything without it, extension or not.
+- A locally installed Chromium browser for Lighthouse to drive.
+- Chrome, Edge, Brave, or Firefox, only if you also want the extension's UI.
+
+The extension and the companion are two separate installs. The companion (npm) is the audit engine — on its own it's already a fully working CLI. The extension is an optional UI on top of it for page capture and in-browser reports; without the companion running, it just sits there **Offline** and can't audit anything. Install order doesn't matter, but for the full experience you need both.
 
 ### For users
 
-**Extension** — download the zip for your browser from [Releases](../../releases): `scanforge-extension-<version>.zip` for Chrome/Edge/Brave, `scanforge-firefox-extension-<version>.zip` for Firefox. Extract it, then:
+**Companion (CLI)** — install it once and keep the `scanforge` command around (the terminal command is `scanforge` regardless — the package name and the command it installs aren't the same thing):
+
+```bash
+npm install -g scanforge-audit
+scanforge
+```
+
+This registers native messaging automatically for whatever supported browsers it finds on your machine, which is what lets the extension's own **Start** button launch the companion for you later — a persistent install keeps that registration pointing at a stable location, so it keeps working. It starts on `http://127.0.0.1:3210`.
+
+If you'd rather not install anything persistent and just run audits from a terminal yourself (not relying on the extension's Start button), `npx scanforge-audit` works too — it registers native messaging as well, but from a cache location that can get cleared, which would silently break Start until you run `npx` again.
+
+**Extension** (optional, adds the browser UI) — download the zip for your browser from [Releases](../../releases): `scanforge-extension-1.0.0.zip` for Chrome/Edge/Brave, `scanforge-firefox-extension-1.0.0.zip` for Firefox. Extract it, then:
 
 - **Chrome / Edge / Brave**: open `chrome://extensions` (or `edge://extensions`), enable **Developer mode**, select **Load unpacked**, choose the extracted folder.
 - **Firefox**: open `about:debugging`, select **This Firefox** → **Load Temporary Add-on**, choose `manifest.json` inside the extracted folder. Permanent installation needs a Mozilla-signed package or publication through Firefox Add-ons.
-
-**Companion (CLI)**:
-
-```bash
-npx scanforge
-```
-
-Installing it registers native messaging automatically for whatever supported browsers it finds on your machine. The companion starts on `http://127.0.0.1:3210`.
 
 ### For developers
 
@@ -300,7 +305,7 @@ Audited pages still perform their normal requests to their own servers and third
 
 ### Companion is not running
 
-In your terminal, run `npx scanforge` (or `npm run companion`). The extension badge will change to **Ready** (green dot).
+In your terminal, run `npx scanforge-audit` (or `npm run companion`). The extension badge will change to **Ready** (green dot).
 
 ### Port 3210 is already in use
 

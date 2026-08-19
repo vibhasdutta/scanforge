@@ -1,5 +1,5 @@
 {
-  "name": "scanforge",
+  "name": "scanforge-audit",
   "version": "1.0.0",
   "description": "Runs Lighthouse across an entire page journey at once instead of one URL at a time — queue multiple pages, audit them concurrently, and get one focused Markdown report your AI coding tool can act on to fix what's broken.",
   "private": false,
@@ -19,6 +19,7 @@
     "unregister": "node scripts/unregister-native-host.js",
     "companion:unregister": "node scripts/unregister-native-host.js",
     "build": "node build.js",
+    "prepublishOnly": "node build.js",
     "test": "node --test test/security.test.js",
     "assets:prepare": "powershell -ExecutionPolicy Bypass -File scripts/prepare-approved-icons.ps1",
     "package:extension": "npm run assets:prepare && npm run build && powershell -ExecutionPolicy Bypass -File scripts/package-extension.ps1"
