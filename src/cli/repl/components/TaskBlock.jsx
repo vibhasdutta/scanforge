@@ -57,8 +57,8 @@ export function TaskBlock({ run, maxWidth, maxRows }) {
   if (!run) return null;
 
   const w = maxWidth || (process.stdout.columns || 100) - 2;
-  const innerW = Math.max(30, w - 4);
-  const barW = Math.max(12, Math.min(30, Math.floor(innerW * 0.4)));
+  const innerW = Math.max(4, w - 4);
+  const barW = Math.max(2, Math.min(30, Math.floor(innerW * 0.4)));
 
   const pages = run.pages || [];
   const stats = computeBatchStats(pages);

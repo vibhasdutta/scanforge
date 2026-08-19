@@ -1,12 +1,9 @@
-import { EventEmitter } from 'node:events';
-
-export class TerminalDriver extends EventEmitter {
+// Terminal dimensions are tracked via Ink's own useWindowSize() hook (see AgentRepl.jsx) so
+// there's a single resize listener shared with Ink's internal redraw bookkeeping, rather than
+// a second one here racing it. This driver only owns the alternate-screen buffer lifecycle.
+export class TerminalDriver {
   constructor() {
-    super();
-    this.columns = process.stdout.columns || 100;
-    this.rows = process.stdout.rows || 30;
     this.isEntered = false;
-    this.onResize = this.handleResize.bind(this);
   }
 
   enter() {
@@ -15,8 +12,6 @@ export class TerminalDriver extends EventEmitter {
       process.stdout.write('\x1b[?1049h\x1b[2J\x1b[H\x1b[?25h');
       this.isEntered = true;
     }
-
-    process.stdout.on('resize', this.onResize);
 
     const cleanup = () => this.exit();
     process.once('exit', cleanup);
@@ -30,13 +25,6 @@ export class TerminalDriver extends EventEmitter {
       process.stdout.write('\x1b[2J\x1b[H\x1b[?1049l\x1b[?25h');
       this.isEntered = false;
     }
-    process.stdout.removeListener('resize', this.onResize);
-  }
-
-  handleResize() {
-    this.columns = process.stdout.columns || 100;
-    this.rows = process.stdout.rows || 30;
-    this.emit('resize', { columns: this.columns, rows: this.rows });
   }
 }
 

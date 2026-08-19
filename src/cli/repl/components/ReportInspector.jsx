@@ -23,7 +23,7 @@ export function ReportInspector({ reports = [], cursor = 0, isExpanded = false, 
   if (!reports || !reports.length) return null;
 
   const w = maxWidth || (process.stdout.columns || 100) - 2;
-  const innerW = Math.max(30, w - 4);
+  const innerW = Math.max(4, w - 4);
   const selectedReport = reports[cursor] || reports[0];
   const data = selectedReport?.data;
   const selectedCount = reports.filter(r => r.selected).length;

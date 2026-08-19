@@ -109,7 +109,7 @@ export function applySettingsSelection(settings, row) {
 
 export function SettingsManager({ settings, cursor = 0, maxWidth, warning = '' }) {
   const w = maxWidth || (process.stdout.columns || 100) - 2;
-  const innerW = Math.max(30, w - 4);
+  const innerW = Math.max(4, w - 4);
   const rows = buildSettingsRows(settings);
   const selectable = rows.filter(r => r.type !== 'header');
   const highlighted = selectable[cursor];

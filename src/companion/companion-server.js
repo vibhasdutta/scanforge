@@ -76,7 +76,7 @@ export function createCompanionServer({ bus = globalCompanionBus, host = DEFAULT
       }
 
       if (request.method === 'GET' && url.pathname === '/health') {
-        return send(request, response, 200, { ok: true, service: 'ScanForge Companion', version: '1.0.2', ...bus.getStatus() });
+        return send(request, response, 200, { ok: true, service: 'ScanForge Companion', version: '1.0.3', ...bus.getStatus() });
       }
 
       if (request.method === 'GET' && url.pathname === '/settings') {

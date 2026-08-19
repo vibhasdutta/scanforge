@@ -9,7 +9,7 @@
 <p align="center">No more running Lighthouse one URL at a time — queue an entire page journey, audit Mobile and Desktop concurrently, and export one focused report that developers and AI coding tools can act on.</p>
 
 <p align="center">
-  <img alt="Version 1.0.2" src="https://img.shields.io/badge/version-1.0.2-ff7300?style=flat-square" />
+  <img alt="Version 1.0.3" src="https://img.shields.io/badge/version-1.0.3-ff7300?style=flat-square" />
   <img alt="Manifest V3" src="https://img.shields.io/badge/extension-Manifest%20V3-202124?style=flat-square" />
   <img alt="Powered by Lighthouse" src="https://img.shields.io/badge/powered%20by-Lighthouse-ff7300?style=flat-square&logo=lighthouse&logoColor=white" />
   <img alt="Local first" src="https://img.shields.io/badge/privacy-local--first-202124?style=flat-square" />

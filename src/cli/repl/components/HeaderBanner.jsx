@@ -22,7 +22,7 @@ export function HeaderBanner({ settings, isCompanionRunning = true, port = 3210,
           <Gradient colors={['#fc6200', '#ffb454']}>
             <Text bold>⚡ SCANFORGE</Text>
           </Gradient>
-          <Text color="gray">v1.0.2</Text>
+          <Text color="gray">v1.0.3</Text>
           <Text color="gray">│</Text>
           <Text color={isCompanionRunning ? 'green' : 'red'} bold>
             {isCompanionRunning ? '● Companion' : '○ Offline'}

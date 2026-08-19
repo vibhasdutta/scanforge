@@ -25,7 +25,7 @@ export function CommandPaletteDropdown({ filteredCommands, highlightedIndex, scr
   const hasBelow = visibleEnd < total;
 
   const w = maxWidth || (process.stdout.columns || 100) - 2;
-  const innerW = Math.max(30, w - 4);
+  const innerW = Math.max(4, w - 4);
 
   return (
     <Box

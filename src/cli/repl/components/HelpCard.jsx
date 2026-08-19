@@ -17,7 +17,7 @@ const CATEGORY_COLORS = {
 
 export function HelpCard({ maxWidth }) {
   const w = maxWidth || (process.stdout.columns || 100) - 2;
-  const innerW = Math.max(30, w - 4);
+  const innerW = Math.max(4, w - 4);
 
   return (
     <Box

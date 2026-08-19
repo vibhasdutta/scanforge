@@ -21,8 +21,8 @@ using System.Reflection;
 [assembly: AssemblyProduct("ScanForge")]
 [assembly: AssemblyDescription("ScanForge Headless Companion Server")]
 [assembly: AssemblyCompany("ScanForge")]
-[assembly: AssemblyVersion("1.0.2.0")]
-[assembly: AssemblyFileVersion("1.0.2.0")]
+[assembly: AssemblyVersion("1.0.3.0")]
+[assembly: AssemblyFileVersion("1.0.3.0")]
 
 namespace ScanForgeLauncher
 {
@@ -181,8 +181,8 @@ using System.Reflection;
 [assembly: AssemblyProduct("ScanForge")]
 [assembly: AssemblyDescription("ScanForge Lighthouse CLI & TUI")]
 [assembly: AssemblyCompany("ScanForge")]
-[assembly: AssemblyVersion("1.0.2.0")]
-[assembly: AssemblyFileVersion("1.0.2.0")]
+[assembly: AssemblyVersion("1.0.3.0")]
+[assembly: AssemblyFileVersion("1.0.3.0")]
 
 namespace ScanForgeCli
 {

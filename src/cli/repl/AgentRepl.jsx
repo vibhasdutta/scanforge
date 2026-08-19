@@ -2,7 +2,7 @@
  * AgentRepl — Gemini CLI & Claude Code style Agent REPL for ScanForge
  */
 import React, { useEffect, useReducer, useState, useCallback } from 'react';
-import { Box, Text, useApp, useInput } from 'ink';
+import { Box, Text, useApp, useInput, useWindowSize } from 'ink';
 import TextInput from 'ink-text-input';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -38,16 +38,14 @@ export function AgentRepl({ bus = globalCompanionBus }) {
   const { exit } = useApp();
 
   // ── Terminal dimensions ─────────────────────────────────────────
-  const [dimensions, setDimensions] = useState({
-    columns: process.stdout.columns || 120,
-    rows: process.stdout.rows || 30,
-  });
-
-  useEffect(() => {
-    const onResize = dims => setDimensions(dims);
-    terminalDriver.on('resize', onResize);
-    return () => terminalDriver.removeListener('resize', onResize);
-  }, []);
+  // Read from Ink's own useWindowSize() rather than a separately-tracked resize
+  // listener — two independent process.stdout 'resize' listeners (this app's and
+  // Ink's own internal one) can fire on different ticks after a real resize, so
+  // for a render or two the Box width this app declares and the width Ink's own
+  // redraw/cursor-position math assumes disagree. Ink's docs call this out by name:
+  // "ghost lines may briefly appear" on resize. Sharing Ink's own tracked stdout
+  // removes the race instead of papering over the symptom.
+  const dimensions = useWindowSize();
 
   // ── Prompt state machine (useReducer) ───────────────────────────
   const [prompt, dispatch] = useReducer(promptReducer, INITIAL_PROMPT_STATE);
@@ -616,7 +614,10 @@ export function AgentRepl({ bus = globalCompanionBus }) {
 
   // ── Derived state ───────────────────────────────────────────────
   const isAuditing = companionStatus?.state === 'auditing';
-  const width = Math.max(60, dimensions.columns - 2);
+  // Never claim more width than the real terminal has — Ink/Yoga will lay out
+  // content assuming this width fits, and a floor above the true available
+  // columns causes rows to overflow and visually corrupt on narrow terminals.
+  const width = Math.max(10, dimensions.columns - 2);
   const cwd = process.cwd().replace(/\\/g, '/');
   const shortCwd = cwd.length > 35 ? '...' + cwd.slice(-32) : cwd;
   const deviceLabel = settings.device === 'both' ? 'Mobile + Desktop' : settings.device;
