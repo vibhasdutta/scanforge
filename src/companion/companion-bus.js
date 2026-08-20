@@ -116,7 +116,8 @@ function normalizeSettings(value = {}) {
   const hw = getHardwareLimits();
   const maxCores = Math.min(hw.cpuMax, Math.max(1, Number.isFinite(value.maxCores) ? Math.round(value.maxCores) : hw.cpuMax));
   const maxMemoryMB = Math.min(hw.memMaxMB, Math.max(512, Number.isFinite(value.maxMemoryMB) ? Math.round(value.maxMemoryMB) : hw.memMaxMB));
-  return { lighthouseMode, device, processingMode, categories: categories.length ? categories : [...allowed], maxCores, maxMemoryMB };
+  const allowPrivateNetworks = value.allowPrivateNetworks === true;
+  return { lighthouseMode, device, processingMode, categories: categories.length ? categories : [...allowed], maxCores, maxMemoryMB, allowPrivateNetworks };
 }
 
 function loadSharedSettings() {
@@ -199,11 +200,15 @@ export async function closeChromeSilently(chrome) {
       }
     }
   } catch {}
-  if (chrome.pid) {
-    try {
-      process.kill(chrome.pid);
-    } catch {}
-  }
+  // chrome.kill() (chrome-launcher's own method) — not a raw process.kill(chrome.pid) — because
+  // chrome-launcher tracks every launched instance in a module-level Set that only chrome.kill()
+  // removes from. Bypassing it here permanently leaked one entry per launch for the rest of the
+  // process's life (confirmed root cause of a heap-exhaustion crash), on top of leaving orphaned
+  // child Chrome processes (process.kill(pid) only kills the main process, not its tree) and
+  // orphaned temp user-data-dirs on disk (only chrome.kill()'s cleanup removes those).
+  try {
+    chrome.kill?.();
+  } catch {}
 }
 
 function withAuditTimeout(promise, onTimeout) {
@@ -220,7 +225,13 @@ function withAuditTimeout(promise, onTimeout) {
 async function runLighthouse(pageUrl, device, mode, categories, chrome) {
   // logLevel 'silent' prevents Lighthouse from writing directly to stderr/stdout,
   // but internal log.events still fire so we can track progress in the TUI.
-  const flags = { onlyCategories: categories, logLevel: 'silent', maxWaitForLoad: 60000 };
+  // locale: 'en-US' pins Lighthouse's output strings regardless of the host machine's locale —
+  // recommendations() in lhr-to-markdown.js matches audit titles against hardcoded English
+  // substrings, which would silently stop matching (no error, just empty recommendations) under
+  // any other locale. disableFullPageScreenshot: the report generator never reads screenshot
+  // data, and this run's whole LHR gets discarded right after — no reason to make Lighthouse
+  // hold that extra weight.
+  const flags = { onlyCategories: categories, logLevel: 'silent', maxWaitForLoad: 60000, locale: 'en-US', disableFullPageScreenshot: true };
   const config = device === 'desktop' ? desktopConfig : undefined;
   if (mode === 'navigation') return lighthouse(pageUrl, { ...flags, port: chrome.port }, config);
 
@@ -350,6 +361,8 @@ export class CompanionBus extends EventEmitter {
     const devices = deviceOption === 'mobile' ? ['mobile'] : deviceOption === 'desktop' ? ['desktop'] : DEVICES;
     const maxCores = options.maxCores || this.sharedSettings.maxCores;
     const maxMemoryMB = options.maxMemoryMB || this.sharedSettings.maxMemoryMB;
+    const processingMode = payload.mode || options.processingMode || this.sharedSettings.processingMode || 'accurate';
+    const allowPrivateNetworks = options.allowPrivateNetworks ?? this.sharedSettings.allowPrivateNetworks ?? false;
 
     const seenUrls = new Set();
     const pages = [];
@@ -381,7 +394,8 @@ export class CompanionBus extends EventEmitter {
       source,
       db,
       state: 'running',
-      mode: payload.mode || this.sharedSettings.processingMode || 'accurate',
+      mode: processingMode,
+      allowPrivateNetworks,
       pages,
       reports: [],
       categories,
@@ -453,11 +467,30 @@ export class CompanionBus extends EventEmitter {
     let cursor = 0;
     const worker = async () => {
       suppressConsole();
-      const chrome = await chromeLauncher.launch({
-        chromeFlags: CHROME_FLAGS,
-        logLevel: 'silent',
-      });
-      run.launchers.add(chrome);
+
+      // One Chrome instance per device type, reused across this worker's pages — not shared
+      // across mobile+desktop (that was leaving stale screen-emulation state behind: a
+      // "desktop" run's recorded configSettings.screenEmulation showed mobile dimensions), but
+      // also not relaunched for every single audit (that paid Chrome's full cold-start cost on
+      // every page, turning multi-page runs into 2x-the-page-count launches and visibly
+      // stalling between audits).
+      const chromeByDevice = {};
+      const getChrome = async device => {
+        if (!chromeByDevice[device]) {
+          const chrome = await chromeLauncher.launch({ chromeFlags: CHROME_FLAGS, logLevel: 'silent' });
+          run.launchers.add(chrome);
+          chromeByDevice[device] = chrome;
+        }
+        return chromeByDevice[device];
+      };
+      const discardChrome = async device => {
+        const chrome = chromeByDevice[device];
+        delete chromeByDevice[device];
+        if (chrome) {
+          run.launchers.delete(chrome);
+          await closeChromeSilently(chrome);
+        }
+      };
 
       try {
         while (!run.cancelled) {
@@ -473,10 +506,12 @@ export class CompanionBus extends EventEmitter {
 
             const auditStartedAt = Date.now();
             try {
-              await assertSafeAuditUrl(page.url);
+              const chrome = await getChrome(device);
+
+              await assertSafeAuditUrl(page.url, run.allowPrivateNetworks);
               const result = await withAuditTimeout(
                 runLighthouse(page.url, device, run.lighthouseMode, run.categories, chrome),
-                () => closeChromeSilently(chrome)
+                () => discardChrome(device)
               );
               if (!result) throw new Error('Lighthouse returned no result.');
 
@@ -518,6 +553,10 @@ export class CompanionBus extends EventEmitter {
                 stage: run.cancelled ? 'Stopped' : 'Failed',
                 error: errMsg,
               });
+              // A failed/crashed Chrome instance shouldn't be trusted for this device's next
+              // page — discard it so getChrome() launches fresh next time. The timeout path
+              // already discards via withAuditTimeout's onTimeout callback above.
+              await discardChrome(device);
             } finally {
               activeTasks.delete(task);
             }
@@ -525,8 +564,7 @@ export class CompanionBus extends EventEmitter {
           page.status = run.cancelled ? 'stopped' : 'complete';
         }
       } finally {
-        run.launchers.delete(chrome);
-        await closeChromeSilently(chrome);
+        await Promise.all(Object.keys(chromeByDevice).map(discardChrome));
         restoreConsole();
       }
     };

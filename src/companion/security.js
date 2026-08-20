@@ -44,11 +44,11 @@ export function validCompanionToken(value) {
   return timingSafeEqual(Buffer.from(value), Buffer.from(getCompanionToken()));
 }
 
-export async function assertSafeAuditUrl(value) {
+export async function assertSafeAuditUrl(value, allowPrivateNetworks = false) {
   let url;
   try { url = new URL(value); } catch { throw new Error('Invalid audit URL.'); }
   if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) throw new Error('Only plain HTTP(S) URLs without credentials can be audited.');
-  if (process.env.SCANFORGE_ALLOW_PRIVATE_NETWORKS === '1') return url.toString();
+  if (allowPrivateNetworks || process.env.SCANFORGE_ALLOW_PRIVATE_NETWORKS === '1') return url.toString();
   const host = url.hostname.replace(/^\[|\]$/g, '');
   if (privateIp(host) || host === 'localhost' || host.endsWith('.localhost')) throw new Error('Private, loopback, and link-local targets are blocked. Set SCANFORGE_ALLOW_PRIVATE_NETWORKS=1 only for intentional internal audits.');
   if (isIP(host)) return url.toString();

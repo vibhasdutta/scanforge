@@ -10,6 +10,7 @@ import { mkdirSync, writeFileSync, chmodSync, existsSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { getRealHomeDir } from './real-home.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,7 +25,7 @@ const FIREFOX_EXTENSION_ID = 'scanforge@scanforge.app';
 // what's actually usable right now without silently skipping a browser detection missed
 // (e.g. a portable/non-standard install path).
 function detectBrowsers(platform) {
-  const found = { chrome: false, edge: false, brave: false, firefox: false };
+  const found = { chrome: false, chromium: false, edge: false, brave: false, firefox: false };
   if (platform === 'win32') {
     const pf = process.env['ProgramFiles'] || 'C:\\Program Files';
     const pf86 = process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)';
@@ -39,14 +40,20 @@ function detectBrowsers(platform) {
   } else if (platform === 'darwin') {
     const apps = {
       chrome: '/Applications/Google Chrome.app',
+      chromium: '/Applications/Chromium.app',
       edge: '/Applications/Microsoft Edge.app',
       brave: '/Applications/Brave Browser.app',
       firefox: '/Applications/Firefox.app',
     };
     for (const [browser, appPath] of Object.entries(apps)) found[browser] = existsSync(appPath);
   } else {
+    // Most Linux distros don't ship Google Chrome in their default repos (proprietary), so
+    // Chromium is commonly the only Chromium-based browser actually installed — detected and
+    // labeled separately here rather than folded into "Chrome" so the console output reflects
+    // what's really on the machine.
     const bins = {
-      chrome: ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser'],
+      chrome: ['google-chrome', 'google-chrome-stable'],
+      chromium: ['chromium', 'chromium-browser'],
       edge: ['microsoft-edge', 'microsoft-edge-stable'],
       brave: ['brave-browser', 'brave'],
       firefox: ['firefox'],
@@ -62,7 +69,7 @@ function detectBrowsers(platform) {
 }
 
 function logDetectedBrowsers(found) {
-  const labels = { chrome: 'Chrome', edge: 'Edge', brave: 'Brave', firefox: 'Firefox' };
+  const labels = { chrome: 'Chrome', chromium: 'Chromium', edge: 'Edge', brave: 'Brave', firefox: 'Firefox' };
   const present = Object.entries(found).filter(([, v]) => v).map(([k]) => labels[k]);
   const missing = Object.entries(found).filter(([, v]) => !v).map(([k]) => labels[k]);
   if (present.length) console.log(`[ScanForge] Detected: ${present.join(', ')} — registered and ready to use.`);
@@ -86,8 +93,8 @@ using System.Reflection;
 [assembly: AssemblyProduct("ScanForge")]
 [assembly: AssemblyDescription("ScanForge Headless Companion Server")]
 [assembly: AssemblyCompany("ScanForge")]
-[assembly: AssemblyVersion("1.0.3.0")]
-[assembly: AssemblyFileVersion("1.0.3.0")]
+[assembly: AssemblyVersion("1.0.4.0")]
+[assembly: AssemblyFileVersion("1.0.4.0")]
 
 namespace ScanForgeLauncher
 {
@@ -331,16 +338,22 @@ function registerUnix(platform) {
     chmodSync(launcherPath, 0o755);
   } catch {}
 
-  const home = os.homedir();
+  const home = getRealHomeDir();
+  // Chrome's own docs list "Chromium" as a directory distinct from "Google Chrome" — most
+  // Linux distros ship Chromium (not Google Chrome, which isn't in most default repos) as
+  // the readily-available Chromium-based browser, so this is a real, commonly-hit target,
+  // not a rare edge case.
   const manifestDirs = platform === 'darwin'
     ? [
         path.join(home, 'Library', 'Application Support', 'Google', 'Chrome', 'NativeMessagingHosts'),
+        path.join(home, 'Library', 'Application Support', 'Chromium', 'NativeMessagingHosts'),
         path.join(home, 'Library', 'Application Support', 'Microsoft Edge', 'NativeMessagingHosts'),
         path.join(home, 'Library', 'Application Support', 'BraveSoftware', 'Brave-Browser', 'NativeMessagingHosts'),
         path.join(home, 'Library', 'Application Support', 'Mozilla', 'NativeMessagingHosts'),
       ]
     : [
         path.join(home, '.config', 'google-chrome', 'NativeMessagingHosts'),
+        path.join(home, '.config', 'chromium', 'NativeMessagingHosts'),
         path.join(home, '.config', 'microsoft-edge', 'NativeMessagingHosts'),
         path.join(home, '.config', 'BraveSoftware', 'Brave-Browser', 'NativeMessagingHosts'),
         path.join(home, '.mozilla', 'native-messaging-hosts'),
@@ -381,11 +394,14 @@ function registerUnix(platform) {
   logDetectedBrowsers(detectBrowsers(platform));
 }
 
-// Runs automatically via "postinstall" as well as manually via "npm run register" — it must
-// never make `npm install` itself fail. A user with an unusual setup (unsupported platform,
-// no .NET Framework, a locked-down registry) still gets a fully working `scanforge` CLI;
-// they just won't get automatic browser-extension launching until they can resolve whatever
-// blocked it, and can always retry with "npm run register" later.
+// No longer wired to npm's "postinstall" — pnpm blocks postinstall scripts by default since
+// v10, and a growing number of security-conscious npm setups set ignore-scripts=true globally
+// too, so `npm install` silently skipping this with no error was a real, recurring failure
+// mode. Registration now runs on every "scanforge" launch instead (self-heals automatically),
+// plus "scanforge --register" and "npm run register" as explicit manual triggers. It must
+// never make its caller fail. A user with an unusual setup (unsupported platform, no .NET
+// Framework, a locked-down registry) still gets a fully working `scanforge` CLI; they just
+// won't get automatic browser-extension launching until they can resolve whatever blocked it.
 function main() {
   try {
     const platform = os.platform();

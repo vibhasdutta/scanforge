@@ -72,6 +72,13 @@ export function buildSettingsRows(settings) {
     min: 512, max: hw.memMaxMB, step: 256, value: Math.min(hw.memMaxMB, settings.maxMemoryMB ?? hw.memMaxMB),
     hint: `max ${(hw.memMaxMB / 1024).toFixed(1)} GB of ${(hw.totalMemMB / 1024).toFixed(1)} GB total — reserves headroom for your OS`,
   });
+
+  rows.push({ type: 'header', label: 'Security' });
+  rows.push({
+    type: 'checkbox', group: 'allowPrivateNetworks', value: 'allowPrivateNetworks',
+    label: 'Allow local/private network URLs', selected: !!settings.allowPrivateNetworks,
+    hint: '(localhost, 127.0.0.1, 192.168.x.x — blocked by default as SSRF protection)',
+  });
   return rows;
 }
 
@@ -99,6 +106,7 @@ export function applySettingsSelection(settings, row) {
   }
   if (row.type === 'checkbox') {
     if (row.disabled) return settings;
+    if (row.group !== 'categories') return { ...settings, [row.group]: !settings[row.group] };
     const has = (settings.categories || []).includes(row.value);
     const nextCategories = has ? settings.categories.filter(c => c !== row.value) : [...(settings.categories || []), row.value];
     if (!nextCategories.length) return settings; // never allow zero categories
@@ -107,12 +115,31 @@ export function applySettingsSelection(settings, row) {
   return settings;
 }
 
-export function SettingsManager({ settings, cursor = 0, maxWidth, warning = '' }) {
+export function SettingsManager({ settings, cursor = 0, maxWidth, maxRows, warning = '' }) {
   const w = maxWidth || (process.stdout.columns || 100) - 2;
   const innerW = Math.max(4, w - 4);
   const rows = buildSettingsRows(settings);
   const selectable = rows.filter(r => r.type !== 'header');
   const highlighted = selectable[cursor];
+
+  // Ink doesn't scroll content that overflows the terminal — it just overlaps/corrupts. Cap how
+  // many logical rows render at once instead of trusting everything fits, and keep the cursor's
+  // row inside that window. The 18-row reserve covers this panel's own border/header/footer plus
+  // AgentRepl's input box, footer line, and margins that sit below it on screen at the same time.
+  const rowBudget = Math.max(6, (maxRows || 40) - 18);
+  let visibleRows = rows;
+  let hiddenAbove = 0;
+  let hiddenBelow = 0;
+  if (rows.length > rowBudget) {
+    const highlightedIdx = highlighted ? rows.indexOf(highlighted) : 0;
+    let start = Math.max(0, highlightedIdx - Math.floor(rowBudget / 2));
+    start = Math.min(start, rows.length - rowBudget);
+    start = Math.max(0, start);
+    const end = start + rowBudget;
+    visibleRows = rows.slice(start, end);
+    hiddenAbove = start;
+    hiddenBelow = rows.length - end;
+  }
 
   return (
     <Box flexDirection="column" borderStyle="round" borderColor="#fc6200" paddingX={1} marginY={1} width={w}>
@@ -124,7 +151,10 @@ export function SettingsManager({ settings, cursor = 0, maxWidth, warning = '' }
       </Box>
 
       <Box flexDirection="column" width={innerW}>
-        {rows.map((row, idx) => {
+        {hiddenAbove > 0 && (
+          <Box width={innerW}><Text color="gray">↑ {hiddenAbove} more above</Text></Box>
+        )}
+        {visibleRows.map((row, idx) => {
           if (row.type === 'header') {
             return (
               <Box key={`h-${idx}`} marginTop={idx === 0 ? 0 : 1} width={innerW}>
@@ -175,6 +205,9 @@ export function SettingsManager({ settings, cursor = 0, maxWidth, warning = '' }
             </Box>
           );
         })}
+        {hiddenBelow > 0 && (
+          <Box width={innerW}><Text color="gray">↓ {hiddenBelow} more below</Text></Box>
+        )}
       </Box>
 
       <Box marginTop={1} width={innerW} justifyContent="space-between">

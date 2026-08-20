@@ -150,7 +150,7 @@ function lighthouseOptions() {
   const device = auditSettings.device;
   const categories = auditSettings.categories;
   if (!categories.length) throw new Error('Select at least one audit category.');
-  return { mode, device, categories };
+  return { mode, device, categories, allowPrivateNetworks: !!auditSettings.allowPrivateNetworks };
 }
 
 function renderRunSelection() {

@@ -168,7 +168,7 @@ export function AgentRepl({ bus = globalCompanionBus }) {
         setTargets(prev => prev.map(t => ({ ...t, selected: !allSelected })));
         return;
       }
-      if (!isTyping && (input === 'd' || input === 'D' || key.delete || key.backspace)) {
+      if (!isTyping && (input === 'd' || input === 'D')) {
         if (targets.length > 0) {
           setTargets(prev => prev.filter((_, idx) => idx !== targetCursor));
           setTargetCursor(prev => Math.max(0, Math.min(prev, targets.length - 2)));
@@ -266,7 +266,7 @@ export function AgentRepl({ bus = globalCompanionBus }) {
       }
       if (input === ' ' || key.return) {
         const row = rows[settingsCursor];
-        if (row.type === 'checkbox' && !row.disabled && row.selected && (settings.categories || []).length === 1) {
+        if (row.type === 'checkbox' && row.group === 'categories' && !row.disabled && row.selected && (settings.categories || []).length === 1) {
           setSettingsWarning('At least one category is required — pick another before removing this one.');
           return;
         }
@@ -631,8 +631,9 @@ export function AgentRepl({ bus = globalCompanionBus }) {
       {/* ── Main Panel Elements (Hidden during active audit for pure focused view) ── */}
       {!isAuditing && (
         <>
-          {/* Welcome Splash (only on initial clean launch) */}
-          {messages.length === 0 && (
+          {/* Welcome Splash (only on initial clean launch, and not alongside another panel —
+              showing both at once was needless height pressure on shorter terminals). */}
+          {messages.length === 0 && !showTargetsManager && !showReportInspector && !showHelp && !showSettingsManager && (
             <WelcomeSplash columns={width} isCompanionRunning={true} port={3210} />
           )}
 
@@ -669,6 +670,7 @@ export function AgentRepl({ bus = globalCompanionBus }) {
               settings={settings}
               cursor={settingsCursor}
               maxWidth={width}
+              maxRows={dimensions.rows}
               warning={settingsWarning}
             />
           )}

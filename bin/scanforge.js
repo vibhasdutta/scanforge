@@ -26,12 +26,17 @@ ScanForge - Multi-page Lighthouse auditing for Developers & AI
 USAGE:
   scanforge                       Launch unified Terminal UI & Extension Companion
   scanforge <url...> [options]    Direct headless audit of specified URLs
+  scanforge --register            (Re-)register native messaging — also runs automatically the
+                                   first time you launch "scanforge" plain, so this is only
+                                   needed if you want to set it up without opening the TUI
   scanforge --unregister          Remove native-messaging registration (run before uninstalling)
 
 OPTIONS:
   --device=<both|mobile|desktop>  Device profile (default: both)
   --mode=<navigation|timespan>    Lighthouse mode (default: navigation)
   --output=<file.md>              Save combined markdown report to file
+  --allow-private-networks        Allow auditing localhost/private-network URLs (blocked by
+                                   default as SSRF protection)
   --help, -h                      Show this help message
 
 EXAMPLES:
@@ -39,6 +44,8 @@ EXAMPLES:
   scanforge https://example.com https://example.com/pricing --device=both --output=report.md
 `);
   process.exit(0);
+} else if (command === '--register' || command === 'register') {
+  await import('../scripts/register-native-host.js');
 } else if (command === '--unregister' || command === 'unregister') {
   // npm dropped preuninstall/postuninstall lifecycle scripts in v7 (no reliable context for why a
   // package is being removed), so cleanup can't run automatically on `npm uninstall`. This has to be
@@ -50,6 +57,7 @@ EXAMPLES:
   const deviceArg = args.find(a => a.startsWith('--device='))?.split('=')[1] || 'both';
   const modeArg = args.find(a => a.startsWith('--mode='))?.split('=')[1] || 'navigation';
   const outputArg = args.find(a => a.startsWith('--output='))?.split('=')[1];
+  const allowPrivateNetworks = args.includes('--allow-private-networks');
 
   console.log(`\n🚀 ScanForge Direct Audit: ${urls.length} URL(s) on ${deviceArg} device profile...\n`);
 
@@ -60,6 +68,7 @@ EXAMPLES:
     pages,
     deviceOption: deviceArg,
     lighthouseMode: modeArg,
+    allowPrivateNetworks,
     onProgress: ({ device, percent, stage }) => {
       process.stdout.write(`\r  [${device.toUpperCase()}] ${percent}%: ${stage.slice(0, 50).padEnd(50)}`);
     },

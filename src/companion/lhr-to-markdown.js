@@ -327,6 +327,10 @@ export function lhrToReportData(lhr, options = {}) {
   return {
     title: clean(options.title || lhr.finalUrl), url: clean(lhr.finalUrl), environment: environment(lhr, options.device),
     categories, metrics, findings, summary: { passed: ids.filter(id => lhr.audits?.[id]?.score >= 0.9).length, actionable: findings.length, reviewed: ids.length },
+    runWarnings: (Array.isArray(lhr.runWarnings) ? lhr.runWarnings : []).map(clean).filter(Boolean),
+    // Lighthouse's own signal that the result may be unreliable enough to discard entirely —
+    // distinct from runWarnings, which are caveats on an otherwise-valid result.
+    runtimeError: lhr.runtimeError ? { code: clean(lhr.runtimeError.code), message: clean(lhr.runtimeError.message) } : null,
   };
 }
 
@@ -358,6 +362,16 @@ function renderFinding(lines, finding, heading = '###') {
 
 export function reportDataToMarkdown(data) {
   const lines = [`# Lighthouse Report - ${data.url}`, ''];
+  if (data.runtimeError) {
+    lines.push(
+      `> ⚠️ **Runtime error (${data.runtimeError.code}): ${data.runtimeError.message}**`,
+      '> Lighthouse flagged this run as unreliable enough that the result may need to be discarded. Treat everything below with caution and consider re-running the audit.',
+      ''
+    );
+  }
+  if (data.runWarnings?.length) {
+    lines.push('> ⚠️ **Run warnings**', ...data.runWarnings.map(w => `> - ${w}`), '');
+  }
   lines.push('## Scores', '', '| Category | Score |', '| --- | --- |');
   for (const category of data.categories) lines.push(`| ${category.title} | ${category.score == null ? 'N/A' : `${Math.round(category.score * 100)}%`} |`);
 
@@ -387,9 +401,19 @@ export function reportsToCombinedMarkdown(reports) {
   const output = ['# ScanForge combined Lighthouse report', ''];
   for (const pageReports of groups.values()) {
     const first = pageReports[0];
-    output.push(`## ${clean(first.title || first.url)}`, '', clean(first.url), '', '### Mobile vs Desktop scores', '');
+    output.push(`## ${clean(first.title || first.url)}`, '', clean(first.url), '');
     const mobile = pageReports.find(report => report.device === 'mobile')?.data;
     const desktop = pageReports.find(report => report.device === 'desktop')?.data;
+    for (const [device, d] of [['Mobile', mobile], ['Desktop', desktop]]) {
+      if (d?.runtimeError) {
+        output.push(`> ⚠️ **${device} runtime error (${d.runtimeError.code}): ${d.runtimeError.message}**`,
+          `> Lighthouse flagged this ${device.toLowerCase()} run as unreliable enough that the result may need to be discarded.`, '');
+      }
+      if (d?.runWarnings?.length) {
+        output.push(`> ⚠️ **${device} run warnings**`, ...d.runWarnings.map(w => `> - ${w}`), '');
+      }
+    }
+    output.push('### Mobile vs Desktop scores', '');
     output.push('| Category | Mobile | Desktop |', '| --- | --- | --- |');
     for (const id of CATEGORY_ORDER) {
       const m = mobile?.categories.find(item => item.id === id);

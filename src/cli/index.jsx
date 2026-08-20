@@ -8,6 +8,16 @@ import { startCompanionServer } from '../companion/companion-server.js';
 
 export async function runTUI() {
   let server = null;
+
+  // Registration isn't wired to npm's postinstall anymore (pnpm blocks it by default since
+  // v10, and plenty of security-conscious npm setups set ignore-scripts=true globally too —
+  // both skip postinstall silently, no error, leaving the extension's Start button unable to
+  // find a companion). Re-registering on every launch instead is cheap and idempotent, and
+  // it's a genuinely manual trigger — the user just ran "scanforge" themselves.
+  try {
+    await import('../../scripts/register-native-host.js');
+  } catch {}
+
   terminalDriver.enter();
 
   try {

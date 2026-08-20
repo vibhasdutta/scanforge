@@ -9,7 +9,7 @@
 <p align="center">No more running Lighthouse one URL at a time — queue an entire page journey, audit Mobile and Desktop concurrently, and export one focused report that developers and AI coding tools can act on.</p>
 
 <p align="center">
-  <img alt="Version 1.0.3" src="https://img.shields.io/badge/version-1.0.3-ff7300?style=flat-square" />
+  <img alt="Version 1.0.4" src="https://img.shields.io/badge/version-1.0.4-ff7300?style=flat-square" />
   <img alt="Manifest V3" src="https://img.shields.io/badge/extension-Manifest%20V3-202124?style=flat-square" />
   <img alt="Powered by Lighthouse" src="https://img.shields.io/badge/powered%20by-Lighthouse-ff7300?style=flat-square&logo=lighthouse&logoColor=white" />
   <img alt="Local first" src="https://img.shields.io/badge/privacy-local--first-202124?style=flat-square" />
@@ -130,13 +130,17 @@ npm install -g scanforge-audit
 scanforge
 ```
 
-This registers native messaging automatically for whatever supported browsers it finds on your machine, which is what lets the extension's own **Start** button launch the companion for you later — a persistent install keeps that registration pointing at a stable location, so it keeps working. It starts on `http://127.0.0.1:3210`.
+The first time you run `scanforge`, it registers native messaging for whatever supported browsers it finds on your machine — that's what lets the extension's own **Start** button launch the companion for you later. This isn't tied to the install step itself (no `postinstall` hook, so it works the same regardless of `npm`/`pnpm`/`yarn` or `ignore-scripts` settings) — it just runs automatically each time you launch `scanforge`, harmlessly re-checking every time. A persistent global install keeps that registration pointing at a stable location, so it keeps working. The companion itself starts on `http://127.0.0.1:3210`.
+
+You can also trigger registration manually without opening the TUI: `scanforge --register`.
 
 If you'd rather not install anything persistent and just run audits from a terminal yourself (not relying on the extension's Start button), `npx scanforge-audit` works too — it registers native messaging as well, but from a cache location that can get cleared, which would silently break Start until you run `npx` again.
 
+**Linux: Firefox/Brave installed via Snap or Flatpak won't work with the Start button.** This isn't a ScanForge-specific bug — Snap and Flatpak sandbox the browser process, which blocks it from executing the native-messaging host script at all (not just finding it). Ubuntu ships Firefox as a Snap by default since 22.04, so this is easy to hit without realizing it. Check with `snap list` / `flatpak list`; if your browser shows up there, install its regular native package instead (e.g. Mozilla's official `.deb`/PPA for Firefox, or Brave's official apt repo) to get the Start button working.
+
 Before uninstalling, run `scanforge --unregister` first to remove that native-messaging registration — npm doesn't run cleanup scripts on `npm uninstall` (removed in npm v7), so this has to be a manual step: `scanforge --unregister && npm uninstall -g scanforge-audit`.
 
-**Extension** (optional, adds the browser UI) — download the zip for your browser from [Releases](../../releases): `scanforge-extension-1.0.zip` for Chrome/Edge/Brave, `scanforge-firefox-extension-1.0.zip` for Firefox. Extract it, then:
+**Extension** (adds the browser UI on top of the companion above — **requires it to be installed and registered first**, the extension can't do anything on its own) — download the zip for your browser from [Releases](../../releases): `scanforge-extension-1.1.zip` for Chrome/Edge/Brave, `scanforge-firefox-extension-1.1.zip` for Firefox. Extract it, then:
 
 - **Chrome / Edge / Brave**: open `chrome://extensions` (or `edge://extensions`), enable **Developer mode**, select **Load unpacked**, choose the extracted folder.
 - **Firefox**: open `about:debugging`, select **This Firefox** → **Load Temporary Add-on**, choose `manifest.json` inside the extracted folder. Permanent installation needs a Mozilla-signed package or publication through Firefox Add-ons.
@@ -286,8 +290,8 @@ npm run package:extension
 Outputs:
 
 ```text
-release/scanforge-extension-1.0.zip
-release/scanforge-firefox-extension-1.0.zip
+release/scanforge-extension-1.1.zip
+release/scanforge-firefox-extension-1.1.zip
 ```
 
 The first package supports Chrome, Edge, and Brave. The second contains Firefox's separate background and extension-identity configuration.

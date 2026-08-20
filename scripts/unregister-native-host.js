@@ -9,6 +9,7 @@ import { execSync } from 'node:child_process';
 import { existsSync, unlinkSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { getRealHomeDir } from './real-home.js';
 
 const HOST_NAME = 'com.scanforge.companion';
 
@@ -45,16 +46,18 @@ function unregisterWindows() {
 }
 
 function unregisterUnix(platform) {
-  const home = os.homedir();
+  const home = getRealHomeDir();
   const manifestDirs = platform === 'darwin'
     ? [
         path.join(home, 'Library', 'Application Support', 'Google', 'Chrome', 'NativeMessagingHosts'),
+        path.join(home, 'Library', 'Application Support', 'Chromium', 'NativeMessagingHosts'),
         path.join(home, 'Library', 'Application Support', 'Microsoft Edge', 'NativeMessagingHosts'),
         path.join(home, 'Library', 'Application Support', 'BraveSoftware', 'Brave-Browser', 'NativeMessagingHosts'),
         path.join(home, 'Library', 'Application Support', 'Mozilla', 'NativeMessagingHosts'),
       ]
     : [
         path.join(home, '.config', 'google-chrome', 'NativeMessagingHosts'),
+        path.join(home, '.config', 'chromium', 'NativeMessagingHosts'),
         path.join(home, '.config', 'microsoft-edge', 'NativeMessagingHosts'),
         path.join(home, '.config', 'BraveSoftware', 'Brave-Browser', 'NativeMessagingHosts'),
         path.join(home, '.mozilla', 'native-messaging-hosts'),

@@ -9,6 +9,7 @@ const coresHint = document.getElementById('cores-hint');
 const memoryInput = document.getElementById('max-memory');
 const memoryValue = document.getElementById('memory-value');
 const memoryHint = document.getElementById('memory-hint');
+const allowPrivateNetworksInput = document.getElementById('allow-private-networks');
 // agentic-browsing's supportedModes per Lighthouse itself is ['navigation', 'snapshot'] — not timespan.
 const MODE_CATEGORIES = {
   navigation: ['performance', 'accessibility', 'best-practices', 'seo', 'agentic-browsing'],
@@ -39,6 +40,7 @@ function readForm() {
   if (!categories.length) throw new Error('Select at least one supported category.');
   return {
     lighthouseMode: checked('lighthouse-mode'), device: checked('audit-device'), processingMode: checked('processing-mode'), categories,
+    allowPrivateNetworks: allowPrivateNetworksInput.checked,
     // Sliders stay disabled until real hardware limits are known — omit rather than send a bogus value.
     ...(coresInput.disabled ? {} : { maxCores: Number(coresInput.value) }),
     ...(memoryInput.disabled ? {} : { maxMemoryMB: Number(memoryInput.value) }),
@@ -96,6 +98,7 @@ async function load() {
   document.querySelector(`input[name="audit-device"][value="${settings.device}"]`).checked = true;
   document.querySelector(`input[name="processing-mode"][value="${settings.processingMode}"]`).checked = true;
   for (const input of categoryInputs) input.checked = settings.categories.includes(input.value);
+  allowPrivateNetworksInput.checked = !!settings.allowPrivateNetworks;
   syncCategories();
   applyHardwareLimits(shared?.ok ? shared.hardwareLimits : null, settings);
   if (!shared?.ok || !shared.hardwareLimits) {

@@ -35,6 +35,7 @@ export const DEFAULT_AUDIT_SETTINGS = Object.freeze({
   device: 'both',
   processingMode: 'accurate',
   categories: ['performance', 'accessibility', 'best-practices', 'seo', 'agentic-browsing'],
+  allowPrivateNetworks: false,
 });
 
 export async function getAuditSettings(storageArea) {

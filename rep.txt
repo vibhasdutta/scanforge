@@ -1,0 +1,263 @@
+# ScanForge combined Lighthouse report
+
+## NOX - Your AI Discord Moderator
+
+http://localhost:9002/
+
+### Mobile vs Desktop scores
+
+| Category | Mobile | Desktop |
+| --- | --- | --- |
+| Performance | 35% | 70% |
+| Accessibility | 96% | 96% |
+| Best Practices | 92% | 96% |
+| SEO | 100% | 100% |
+| Agentic Browsing | 67% | 67% |
+
+### Mobile vs Desktop metrics
+
+| Metric | Mobile | Desktop | Target |
+| --- | --- | --- | --- |
+| First Contentful Paint | 1.5 s | 0.4 s | < 1.8 s |
+| Largest Contentful Paint | 18.6 s | 3.9 s | < 2.5 s |
+| Total Blocking Time | 30,540 ms | 80 ms | < 200 ms |
+| Cumulative Layout Shift | 0 | 0 | < 0.1 |
+| Speed Index | 12.0 s | 5.1 s | < 3.4 s |
+| Time to Interactive | 93.7 s | 7.1 s | < 3.8 s |
+
+### Top priorities
+
+1. **LCP breakdown** - Both
+2. **Network dependency tree** - Both
+3. **Page prevented back/forward cache restoration** - Both
+4. **Background and foreground colors do not have a sufficient contrast ratio.** - Both
+5. **Browser errors were logged to the console** - Both
+6. **Missing source maps for large first-party JavaScript** - Both
+7. **Issues were logged in the `Issues` panel in Chrome Devtools** - mobile
+8. **llms.txt does not follow recommendations** - Both
+9. **Forced reflow** - desktop
+10. **Max Potential First Input Delay** - mobile
+
+### Fix: LCP breakdown
+
+Affects: Both devices
+
+Each [subpart has specific improvement strategies](https://developer.chrome.com/docs/performance/insights/lcp-breakdown). Ideally, most of the LCP time should be spent on loading the resources, not within delays.
+
+**Mobile evidence**
+
+| Subpart | Duration |
+| --- | --- |
+| Time to first byte | 2.22 s |
+| Element render delay | 517 ms |
+
+Affected element: `<h1 class="text-5xl sm:text-6xl md:text-8xl font-bold mb-2 md:mb-0 md:py-0 leading-ti…">`
+
+**Desktop evidence**
+
+| Subpart | Duration |
+| --- | --- |
+| Time to first byte | 3.31 s |
+| Element render delay | 647 ms |
+
+Affected element: `<h1 class="text-5xl sm:text-6xl md:text-8xl font-bold mb-2 md:mb-0 md:py-0 leading-ti…">`
+
+Confidence: Evidence available
+
+**Recommended fix**
+
+- Optimize the largest phase first: server/cache work for TTFB, preload/priority for load delay, image compression for load duration, or rendering/CSS work for render delay.
+
+### Fix: Network dependency tree
+
+Affects: Both devices
+
+[Avoid chaining critical requests](https://developer.chrome.com/docs/performance/insights/network-dependency-tree) by reducing the length of chains, reducing the download size of resources, or deferring the download of unnecessary resources to improve page load.
+
+**Mobile evidence**
+
+Longest critical chain: 2.69 s
+
+| Request | End time | Transfer |
+| --- | --- | --- |
+| localhost:9002/ | 2.69 s | 161.0 KiB |
+| localhost:9002/manifest.json | 2.30 s | 2.0 KiB |
+
+**Desktop evidence**
+
+Longest critical chain: 3.90 s
+
+| Request | End time | Transfer |
+| --- | --- | --- |
+| localhost:9002/ | 3.90 s | 161.0 KiB |
+| localhost:9002/manifest.json | 3.46 s | 2.0 KiB |
+
+Confidence: Evidence available
+
+**Recommended fix**
+
+- Shorten the longest critical chain by inlining critical CSS, deferring non-critical scripts, and eliminating unnecessary resource redirects.
+- Only preconnect to origins needed during initial above-the-fold rendering.
+
+### Fix: Page prevented back/forward cache restoration
+
+Affects: Both devices
+
+Many navigations are performed by going back to a previous page, or forwards again. The back/forward cache (bfcache) can speed up these return navigations.
+
+**Mobile evidence**
+
+| Failure reason | Failure type |
+| --- | --- |
+| Pages whose main resource has cache-control:no-store cannot enter back/forward cache. | Not actionable |
+| Back/forward cache is disabled because some JavaScript network request received resource with Cache-Control: no-store header. | Not actionable |
+| Back/forward cache is disabled because WebSocket has been used. | Not actionable |
+
+**Desktop evidence**
+
+| Failure reason | Failure type |
+| --- | --- |
+| Pages whose main resource has cache-control:no-store cannot enter back/forward cache. | Not actionable |
+| Back/forward cache is disabled because some JavaScript network request received resource with Cache-Control: no-store header. | Not actionable |
+| Back/forward cache is disabled because WebSocket has been used. | Not actionable |
+
+Confidence: Evidence available
+
+**Recommended fix**
+
+- Set `Cache-Control: public, max-age=31536000, immutable` for content-hashed static assets (JS, CSS, fonts, images).
+- Never apply long immutable caching to root HTML documents.
+
+### Fix: Background and foreground colors do not have a sufficient contrast ratio.
+
+Affects: Both devices
+
+Low-contrast text is difficult or impossible for many users to read. [Learn how to provide sufficient color contrast](https://dequeuniversity.com/rules/axe/4.12/color-contrast).
+
+**Mobile evidence**
+
+| Failing Elements |
+| --- |
+| <button class="inline-flex items-center justify-center gap-2 whitespace-nowrap ring-offse…"> |
+
+**Desktop evidence**
+
+| Failing Elements |
+| --- |
+| <button class="inline-flex items-center justify-center gap-2 whitespace-nowrap ring-offse…"> |
+
+Confidence: Evidence available
+
+**Recommended fix**
+
+- Increase foreground/background contrast to meet WCAG AA standards (minimum 4.5:1 for standard text, 3:1 for large text).
+
+### Fix: Browser errors were logged to the console
+
+Affects: Both devices
+
+Errors logged to the console indicate unresolved problems. They can come from network request failures and other browser concerns.
+
+**Mobile evidence**
+
+| Source | Description |
+| --- | --- |
+| localhost:9002/api/discord/user:1:1 | Failed to load resource: the server responded with a status of 401 (Unauthorized) |
+| apis.google.com/:1:1 | Framing 'https://noxbot-1242b.firebaseapp.com/' violates the following Content Security Policy directive: "frame-src 'self' https://checkout.razorpay.com https://api.razorpay.com https://apis.google.com". The request has been blocked. |
+
+**Desktop evidence**
+
+| Source | Description |
+| --- | --- |
+| localhost:9002/api/discord/user:1:1 | Failed to load resource: the server responded with a status of 401 (Unauthorized) |
+
+Confidence: Evidence available
+
+### Fix: Missing source maps for large first-party JavaScript
+
+Affects: Both devices
+
+Source maps translate minified code to the original source code. This helps developers debug in production.
+
+**Mobile evidence**
+
+| URL | Map URL |
+| --- | --- |
+| localhost:9002/_next/static/chunks/node_modules_react-icons_si_index_mjs_86623806._.js | localhost:9002/_next/static/chunks/node_modules_react-icons_si_index_mjs_86623806._.js.map |
+| localhost:9002/_next/static/chunks/node_modules_react-icons_fa_index_mjs_0459ff00._.js | localhost:9002/_next/static/chunks/node_modules_react-icons_fa_index_mjs_0459ff00._.js.map |
+| localhost:9002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js | localhost:9002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js.map |
+| localhost:9002/_next/static/chunks/node_modules_next_dist_compiled_next-devtools_index_1dd7fb59.js | localhost:9002/_next/static/chunks/node_modules_next_dist_compiled_next-devtools_index_1dd7fb59.j... |
+| localhost:9002/_next/static/chunks/node_modules_next_dist_client_aaee43fe._.js | localhost:9002/_next/static/chunks/node_modules_next_dist_client_aaee43fe._.js.map |
+| localhost:9002/_next/static/chunks/node_modules_motion-dom_dist_es_e53bc199._.js | localhost:9002/_next/static/chunks/node_modules_motion-dom_dist_es_e53bc199._.js.map |
+| +21 more affected items |  |
+
+**Desktop evidence**
+
+| URL | Map URL |
+| --- | --- |
+| localhost:9002/_next/static/chunks/node_modules_react-icons_si_index_mjs_86623806._.js | localhost:9002/_next/static/chunks/node_modules_react-icons_si_index_mjs_86623806._.js.map |
+| localhost:9002/_next/static/chunks/node_modules_react-icons_fa_index_mjs_0459ff00._.js | localhost:9002/_next/static/chunks/node_modules_react-icons_fa_index_mjs_0459ff00._.js.map |
+| localhost:9002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js | localhost:9002/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js.map |
+| localhost:9002/_next/static/chunks/node_modules_next_dist_compiled_next-devtools_index_1dd7fb59.js | localhost:9002/_next/static/chunks/node_modules_next_dist_compiled_next-devtools_index_1dd7fb59.j... |
+| localhost:9002/_next/static/chunks/node_modules_next_dist_client_aaee43fe._.js | localhost:9002/_next/static/chunks/node_modules_next_dist_client_aaee43fe._.js.map |
+| localhost:9002/_next/static/chunks/node_modules_motion-dom_dist_es_e53bc199._.js | localhost:9002/_next/static/chunks/node_modules_motion-dom_dist_es_e53bc199._.js.map |
+| +21 more affected items |  |
+
+Confidence: Evidence available
+
+### Fix: Issues were logged in the `Issues` panel in Chrome Devtools
+
+Affects: Mobile only
+
+Issues logged to the `Issues` panel in Chrome Devtools indicate unresolved problems. They can come from network request failures, insufficient security controls, and other browser concerns.
+
+**Mobile evidence**
+
+| Issue type |
+| --- |
+| Content security policy |
+
+Confidence: Evidence available
+
+### Fix: llms.txt does not follow recommendations
+
+Affects: Both devices
+
+If your llms.txt file does not follow recommendations, large language models may not be able to understand how you want your website to be crawled or used for training. The [llms.txt](https://llmstxt.org/) file should be a Markdown file containing at least one H1 header.
+
+Confidence: Evidence incomplete - inspect the Lighthouse HTML report or reproduce the audit before changing code.
+
+### Fix: Forced reflow
+
+Affects: Desktop only
+
+A forced reflow occurs when JavaScript queries geometric properties (such as offsetWidth) after styles have been invalidated by a change to the DOM state. This can result in poor performance.
+
+**Desktop evidence**
+
+| Source | Total reflow time |
+| --- | --- |
+| Unmapped browser/framework work (Lighthouse could not identify a JS callsite) | 52 ms |
+
+Confidence: Partial evidence - Lighthouse measured the work but could not attribute all of it to a JavaScript callsite.
+
+**Recommended fix**
+
+- Batch DOM reads before DOM writes.
+- Inspect attributed source locations and avoid reading layout immediately after changing styles or the DOM.
+- For unmapped time, record a Chrome DevTools Performance trace with production source maps enabled and inspect Layout/Recalculate Style events.
+
+### Fix: Max Potential First Input Delay
+
+Affects: Mobile only
+
+The maximum potential First Input Delay that your users could experience is the duration of the longest task. [Learn more about the Maximum Potential First Input Delay metric](https://developer.chrome.com/docs/lighthouse/performance/lighthouse-max-potential-fid/).
+
+Confidence: Evidence incomplete - inspect the Lighthouse HTML report or reproduce the audit before changing code.
+
+### Audit environments
+
+- mobile: 412 x 823 @1.75x; simulate; 150 ms RTT, 1638.4 Kbps; CPU 4x slowdown; duration 92.6 s; Lighthouse v13.4.1
+- desktop: 1350 x 940 @1x; simulate; 40 ms RTT, 10240 Kbps; CPU 1x slowdown; duration 93.8 s; Lighthouse v13.4.1
+
+---
